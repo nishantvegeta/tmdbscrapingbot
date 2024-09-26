@@ -30,7 +30,7 @@ class TmdbMoviesScrapper:
         instance and navigates to the TMDb homepage.
         """
         self.browser = Selenium()
-        self.tmdb_url = 'https://www.themoviedb.org/search?query='
+        self.tmdb_url = 'https://www.themoviedb.org/search/movie?query='
         self.browser.open_available_browser()  # Opens the browser to TMDb home
         self.browser.maximize_browser_window()
 
@@ -91,6 +91,10 @@ class TmdbMoviesScrapper:
         for _ in range(10):  # You can increase or decrease the number of scrolls
             self.browser.press_keys(None, "PAGE_DOWN")
             time.sleep(scroll_pause_time)
+
+        for _ in range(10):
+            self.browser.pess_keys(None, "PAGE_UP")
+            time.sleep(scroll_pause_time)
             
         #     # Find all movie results by identifying the 'details' class
         #     results = self.browser.find_elements("//div[@class='card style_1']")
@@ -133,10 +137,10 @@ class TmdbMoviesScrapper:
     def extract_movie_details(self, movie_name):
         """Extract TMDB score, Storyline, Genres, and Reviews."""
         # Step 5: Extract details using appropriate XPaths
-        user_score_xpath = '//*[@id="consensus_pill"]/div/div[1]/div/div'
+        user_score_xpath = '//div[@class="user_score_chart"]'
         storyline_xpath = '//div[@class="overview"]//p'
         genres_xpath = '//span[@class="genres"]'
-        reviews_xpath = '//*[@id="media_v4"]/div/div/div[1]/div/section[2]/section/div[1]/ul/li'
+        reviews_xpath = '//div[@class="inner_content"]//p[1]'
 
         try:
             user_score = self.browser.get_element_attribute(user_score_xpath, "data-percent")
@@ -173,11 +177,31 @@ class TmdbMoviesScrapper:
                 self.browser.scroll_element_into_view(title_element)
                 self.browser.click_element_when_visible(title_element)
                 break
-
         time.sleep(5)
 
         # Extract movie details
         self.extract_movie_details(movie_name)
+
+    def get_latest_movie(self, movie_name, movie_years_path, latest_movie_path):
+        self.browser.execute_javascript(
+            "window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(1)
+        movie_elements = self.browser.find_elements(
+            movie_years_path.format(movie=movie_name))
+        if not movie_elements:
+            return None, 'No exact match found'
+
+        movie_dates = [element.text for element in movie_elements]
+
+        latest_year = max(movie_dates) if movie_dates else None
+        self.browser.scroll_element_into_view(
+            latest_movie_path.format(movie=movie_name, year=latest_year))
+        self.browser.click_element_when_visible(
+            latest_movie_path.format(movie=movie_name, year=latest_year))
+        return latest_year, 'Success'
+
+
+
 
     
 
