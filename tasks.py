@@ -219,4 +219,3 @@ def scrape_movies():
 
 if __name__ == "__main__":
     scrape_movies()
-
